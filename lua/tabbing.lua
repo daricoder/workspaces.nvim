@@ -48,21 +48,21 @@ local close_buffers = function()
 
     -- local deleted_tab = vim.fn.tabpagenr() + 1
     for buf, tabs in pairs(Mivar) do
-        print('comienzo iteracion')
+        -- print('comienzo iteracion')
         for tab, bool in pairs(tabs) do
-            print('buf: ' ..
-                buf .. ' tab: ' .. tab .. ' previoustab: ' .. tab_previous .. ' current_tab: ' .. current_tab)
+            -- print('buf: ' ..
+            --     buf .. ' tab: ' .. tab .. ' previoustab: ' .. tab_previous .. ' current_tab: ' .. current_tab)
             if tab == tab_previous then
-                print('tab == tabprevious')
+                -- print('tab == tabprevious')
                 Mivar[buf][tab] = nil
                 vim.api.nvim_buf_delete(buf, { force = true })
             end
             if tab > tab_previous then
-                print('tab > tabprevious')
+                -- print('tab > tabprevious')
                 Mivar[buf][tab] = Mivar[buf][tab] - 1
             end
         end
-        print('termino iteracion')
+        -- print('termino iteracion')
 
 
     end
@@ -92,7 +92,7 @@ function M.setup(conf)
 
             if vim.fn.buflisted(buf) == 0 then return end
 
-            print(event .. " buf: " .. data.buf .. " tab: " .. tab)
+            -- print(event .. " buf: " .. data.buf .. " tab: " .. tab)
 
             if event == "BufEnter" then
                 -- print('entro a bufenter')
