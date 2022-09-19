@@ -90,9 +90,24 @@ function M.setup(conf)
             local buf = data.buf
             local event = data.event
 
-            if vim.fn.buflisted(buf) == 0 then return end
+            if vim.fn.buflisted(buf) == 0 then
 
-            -- print(event .. " buf: " .. data.buf .. " tab: " .. tab)
+                local buftype = vim.fn.getbufvar(data.buf, 'floaterm_wintype')
+                if buftype == 'split' or buftype == 'vsplit' then
+                    if (Mivar[buf] == nil) then
+                        Mivar[buf] = {}
+                    end
+                    -- si no existe
+                    if Mivar[buf][tab] == nil then
+                        Mivar[buf][tab] = true
+                    end
+                else
+                    return
+
+                end
+            end
+
+            print(event .. " buf: " .. data.buf .. " tab: " .. tab)
 
             if event == "BufEnter" then
                 -- print('entro a bufenter')
@@ -158,10 +173,23 @@ function M.setup(conf)
             end
 
 
-            -- print(vim.inspect(Mivar))
+            print(vim.inspect(Mivar))
         end
     })
 
 end
+
+vim.api.nvim_create_autocmd({ 'User' }, {
+    pattern = "FloatermOpen",
+    callback = function(data)
+        print('FloatermOpen')
+        print(data.buf)
+        -- local buftype = vim.
+        local buftype = vim.fn.getbufvar(data.buf, 'floaterm_wintype')
+        print('type: ' .. buftype)
+        if buftype ~= 'float' then vim.fn.setbufvar(data.buf, '&buflisted', 1) end
+    end
+})
+
 
 return M
