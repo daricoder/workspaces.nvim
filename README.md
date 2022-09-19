@@ -4,7 +4,7 @@ tabbing.nvim
 
 <p align="center">A <i>discrete</i> 💅 tab manager for neovim
 
-![2022-09-17 23-03-24(tabbing nvim)](https://user-images.githubusercontent.com/64455469/190886110-5191e56e-0272-4103-a502-2069498f038e.gif)
+![2022-09-17(tabbing nvim)](https://user-images.githubusercontent.com/64455469/190948158-b99a7e24-9015-4c3b-94c8-954b690546db.gif)
 
 - [Requirements](#requirements)
 - [Installation](#installation)
