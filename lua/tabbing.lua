@@ -5,6 +5,9 @@ local make_buf_listed_and_unlisted = function()
 
     local current_tab = vim.fn.tabpagenr()
     local max_tabs = vim.fn.tabpagenr('$')
+    -- local count_buffers_in_current_tab = 0
+    -- local count_nonamemodified_buffers_in_current_tab = 0
+    -- local nonamedmodifiedbuffer = nil
     for buf, tabs in pairs(Mivar) do
         local exist = false
         for tab, bool in pairs(tabs) do
@@ -27,7 +30,16 @@ local make_buf_listed_and_unlisted = function()
 
                 -- vim.fn.setbufvar(buf, '&buflisted', 0)
                 -- break
+                -- print('hola hola')
+                -- print(vim.inspect(vim.fn.getbufinfo('%')[1]['name']))
+                -- print(vim.inspect(vim.fn.getbufinfo('%')[1]['changed']))
+                -- local bufinfo = vim.fn.getbufinfo('%')[1]
+                -- if bufinfo['name'] == '' and bufinfo['changed'] == 0 then
+                --     count_nonamemodified_buffers_in_current_tab = count_nonamemodified_buffers_in_current_tab + 1
+                --     nonamedmodifiedbuffer = buf
+                -- end
                 exist = true
+                -- count_buffers_in_current_tab = count_buffers_in_current_tab + 1
 
             end
 
@@ -37,6 +49,10 @@ local make_buf_listed_and_unlisted = function()
         end
         if not exist then vim.fn.setbufvar(buf, '&buflisted', 0) end
     end
+    -- print(count_buffers_in_current_tab, count_nonamemodified_buffers_in_current_tab)
+    -- if current_tab > 1 and count_buffers_in_current_tab ~= 0 and count_nonamemodified_buffers_in_current_tab ~= 0 then
+    --     vim.api.nvim_buf_delete(nonamedmodifiedbuffer,{force = true})
+    -- end
 
 end
 
@@ -49,18 +65,28 @@ local close_buffers = function()
     -- local deleted_tab = vim.fn.tabpagenr() + 1
     for buf, tabs in pairs(Mivar) do
         -- print('comienzo iteracion')
+        local buf_exist = 0
         for tab, bool in pairs(tabs) do
+            buf_exist = buf_exist + 1
             -- print('buf: ' ..
             --     buf .. ' tab: ' .. tab .. ' previoustab: ' .. tab_previous .. ' current_tab: ' .. current_tab)
             if tab == tab_previous then
                 -- print('tab == tabprevious')
                 Mivar[buf][tab] = nil
-                vim.api.nvim_buf_delete(buf, { force = true })
+                buf_exist = buf_exist - 1
+                -- vim.api.nvim_buf_delete(buf, { force = true })
             end
             if tab > tab_previous then
                 -- print('tab > tabprevious')
-                Mivar[buf][tab] = Mivar[buf][tab] - 1
+                Mivar[buf][tab] = nil
+                Mivar[buf][tab - 1] = true
             end
+        end
+        if buf_exist == 0 then
+            -- print('eliminando buffer de tabbing y de buffers!')
+            Mivar[buf] = nil
+            vim.fn.setbufvar(buf, '&buflisted', 0)
+            vim.api.nvim_buf_delete(buf, { force = true })
         end
         -- print('termino iteracion')
 
@@ -75,13 +101,46 @@ local make_buf_listed = function()
     end
 end
 
+local tab_created = function()
+
+    local current_tab = vim.fn.tabpagenr()
+    for buf, tabs in pairs(Mivar) do
+        for tab, bool in pairs(tabs) do
+
+            -- print('buf: ' ..
+            --     buf .. ' tab: ' .. tab .. ' previoustab: ' .. tab_previous .. ' current_tab: ' .. current_tab)
+            if tab >= current_tab then
+                -- print('tab >= tabprevious... haciendo tab+1')
+                Mivar[buf][tab] = nil
+                Mivar[buf][tab + 1] = true
+            end
+        end
+    end
+end
+
+local check_noname = function()
+
+    local current_tab = vim.fn.tabpagenr()
+    for buf, tabs in pairs(Mivar) do
+        for tab, bool in pairs(tabs) do
+
+            print('buf: ' ..
+                buf .. ' tab: ' .. tab .. ' previoustab: ' .. tab_previous .. ' current_tab: ' .. current_tab)
+            if tab == current_tab then
+                print('tab >= tabprevious... haciendo tab+1')
+                Mivar[buf][tab] = nil
+                Mivar[buf][tab + 1] = true
+            end
+        end
+    end
+end
 
 
 local group = vim.api.nvim_create_augroup('puta', { clear = false })
 
 function M.setup(conf)
 
-    vim.api.nvim_create_autocmd({ "BufEnter", "BufDelete", "WinEnter", "WinLeave", "TabLeave", "TabClosed" }, {
+    vim.api.nvim_create_autocmd({ "BufNew", "BufEnter", "WinEnter", "WinLeave", "TabNew", "TabLeave", "TabClosed" }, {
         group = group,
         pattern = '*',
         nested = true,
@@ -101,22 +160,44 @@ function M.setup(conf)
                     if Mivar[buf][tab] == nil then
                         Mivar[buf][tab] = true
                     end
-                else
+                elseif event ~= 'TabNew' then
                     return
-
                 end
             end
 
-            print(event .. " buf: " .. data.buf .. " tab: " .. tab)
+            -- print(event .. " buf: " .. data.buf .. " tab: " .. tab)
 
             if event == "BufEnter" then
                 -- print('entro a bufenter')
                 --
+                -- si aun no tiene ningun registro
                 if (Mivar[buf] == nil) then
                     Mivar[buf] = {}
                 end
-                -- si no existe
+                -- si no existe tab para este buffer
                 if Mivar[buf][tab] == nil then
+
+
+                    local current_tab = vim.fn.tabpagenr()
+                    local buffer_empty = nil
+                    local count = 0
+                    for bufx, tabs in pairs(Mivar) do
+                        for tab, bool in pairs(tabs) do
+                            if tab == current_tab then
+                                count = count + 1
+                                local bufinfo = vim.fn.getbufinfo(bufx)[1]
+                                if bufinfo['name'] == '' and bufinfo['changed'] == 0 then
+                                    -- print('encontre uno vacio', bufx)
+                                    buffer_empty = bufx
+                                end
+                            end
+                        end
+                    end
+                    -- print(buffer_empty, count)
+                    if count == 1 and buffer_empty then
+                        vim.api.nvim_buf_delete(buffer_empty, { force = true })
+                        Mivar[buffer_empty] = nil
+                    end
                     Mivar[buf][tab] = true
                 end
                 -- Mivar[buf] = tab
@@ -140,17 +221,17 @@ function M.setup(conf)
             end
 
 
-            if event == "BufDelete" then
-                -- print('entro a bufDelete')
-                Mivar[buf][tab] = nil
-                -- Mivar[buf] = nil
-                -- make_buf_listed_and_unlisted()
-            end
-
-            -- if event == "TabEnter" then
-            --     -- print('entro TabEnter')
-            --     make_buf_listed_and_unlisted()
+            -- if event == "BufDelete" then
+            --     -- print('entro a bufDelete')
+            --     -- Mivar[buf][tab] = nil
+            --     -- Mivar[buf] = nil
+            --     -- make_buf_listed_and_unlisted()
             -- end
+
+            if event == "TabNew" then
+                -- print('entro TabEnter')
+                tab_created()
+            end
 
 
             if event == "TabLeave" then
@@ -173,7 +254,7 @@ function M.setup(conf)
             end
 
 
-            print(vim.inspect(Mivar))
+            -- print(vim.inspect(Mivar))
         end
     })
 
@@ -182,12 +263,12 @@ end
 vim.api.nvim_create_autocmd({ 'User' }, {
     pattern = "FloatermOpen",
     callback = function(data)
-        print('FloatermOpen')
-        print(data.buf)
-        -- local buftype = vim.
-        local buftype = vim.fn.getbufvar(data.buf, 'floaterm_wintype')
-        print('type: ' .. buftype)
-        if buftype ~= 'float' then vim.fn.setbufvar(data.buf, '&buflisted', 1) end
+        -- print('FloatermOpen')
+        -- print(data.buf)
+        -- -- local buftype = vim.
+        -- local buftype = vim.fn.getbufvar(data.buf, 'floaterm_wintype')
+        -- print('type: ' .. buftype)
+        -- if buftype ~= 'float' then vim.fn.setbufvar(data.buf, '&buflisted', 1) end
     end
 })
 
