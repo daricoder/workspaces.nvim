@@ -1,5 +1,5 @@
 <h1 align="center">
-tabbing.nvim
+workspaces.nvim
 </h1>
 
 <p align="center">A <i>discrete</i> 💅 tab manager for neovim
