@@ -4,17 +4,17 @@ workspaces.nvim
 
 <p align="center">A <i>discrete</i> 💅 tab manager for neovim
 
-![2022-09-17(tabbing nvim)](https://user-images.githubusercontent.com/64455469/190948158-b99a7e24-9015-4c3b-94c8-954b690546db.gif)
+![workspaces](https://user-images.githubusercontent.com/64455469/192165473-c405ffa6-109c-4352-a43d-6406b4d313ad.gif)
 
 - [Requirements](#requirements)
 - [Installation](#installation)
 - [Usage](#usage)
 
 ## Requirements
-
+[nerd fonts](https://github.com/ryanoasis/nerd-fonts))
 - Neovim 0.7+
 - bufferline.nvim from akinsho
-
+- [bufferline.nvim from akinsho](https://github.com/ryanoasis/nerd-fonts)
 ## Installation
 
 **Lua**
