@@ -13,7 +13,7 @@ workspaces.nvim
 ## Requirements
 [nerd fonts](https://github.com/ryanoasis/nerd-fonts))
 - Neovim 0.7+
-- bufferline from akinsho [see bufferline.nvim](https://github.com/akinsho/bufferline.nvim)
+- bufferline from akinsho ([see bufferline.nvim](https://github.com/akinsho/bufferline.nvim))
 
 ## Installation
 
