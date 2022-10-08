@@ -228,4 +228,6 @@ vim.api.nvim_create_autocmd({ 'User' }, {
 })
 
 
+-- vim.opt.tabline = "%!luaeval('require('tabline\').myTabLine3())"
+vim.opt.tabline = "%!luaeval('require(\"tabline\").myTabLine3()')"
 return M
