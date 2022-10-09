@@ -74,6 +74,7 @@ local close_buffers = function()
             if tab == tab_previous then
                 -- print('tab == tabprevious')
                 BufListed[buf][tab] = nil
+
                 buf_exist = buf_exist - 1
                 -- vim.api.nvim_buf_delete(buf, { force = true })
             end
@@ -81,6 +82,8 @@ local close_buffers = function()
                 -- print('tab > tabprevious')
                 BufListed[buf][tab] = nil
                 BufListed[buf][tab - 1] = true
+
+
             end
         end
         if buf_exist == 0 then
@@ -93,6 +96,25 @@ local close_buffers = function()
 
 
     end
+    for i = current_tab, last_tab, 1 do
+
+        if i == tab_previous then
+            -- print(vim.inspect(require 'tabline'.name_workspaces))
+            require 'tabline'.name_workspaces[i] = nil
+            -- print("remove", i)
+            -- print(vim.inspect(require 'tabline'.name_workspaces))
+        end
+        if i > tab_previous then
+            -- print(vim.inspect(require 'tabline'.name_workspaces))
+            local workspace_name = require 'tabline'.name_workspaces[i]
+            -- require 'tabline'.name_workspaces[i] = nil
+            -- print("rest", i)
+            require 'tabline'.name_workspaces[i - 1] = workspace_name
+            -- print(vim.inspect(require 'tabline'.name_workspaces))
+        end
+
+    end
+
 end
 
 local make_buf_listed = function()
@@ -114,6 +136,13 @@ local tab_created = function()
                 -- print('tab >= tabprevious... haciendo tab+1')
                 BufListed[buf][tab] = nil
                 BufListed[buf][tab + 1] = true
+                local tab_name = require 'tabline'.name_workspaces[tab]
+                if tab_name ~= nil then
+                    print(tab_name)
+                    print('tab name no es nulo')
+                    require 'tabline'.name_workspaces[tab] = nil
+                    require 'tabline'.name_workspaces[tab + 1] = tab_name
+                end
             end
         end
     end

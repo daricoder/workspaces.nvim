@@ -1,23 +1,16 @@
 local M = {}
-vim.cmd [[
+M.name_workspaces = {}
 
+
+vim.cmd [[
 hi TabLine guibg=NONE gui=NONE
 hi TabLineFill guibg=NONE gui=NONE
 hi TabLineSel guibg=NONE gui=NONE
 hi! link Tabline LineNr
 hi! link TablineSel Special
-hi prueba guibg=NONE guifg=#FFFFFF
-
 
 function SwitchBuffer(minwid, nclicks, button, mod)
-    " echom "hola puto"
-    " echom a:minwid
-    " echom type(a:minwid)
-    " echom a:nclicks
-    " echom a:button
-    " " echom a:mod
     execute "buffer ". a:minwid
-
 endfunction
 
 
@@ -100,7 +93,7 @@ M.myTabLine3 = function()
                     #lsp_warns .. filename_group_hl .. lsp_warn_icon .. ''
             end
             --  if some warns exists
-            if #lsp_warns > 0 then
+            if #lsp_warns > 0 and #lsp_errors > 0 then
                 lsp_indicators = lsp_indicators .. ' '
             end
             -- if some errors exists
@@ -141,8 +134,10 @@ M.myTabLine3 = function()
         else
             s = s .. "%#Tabline#"
         end
+        local name_workspace = M.name_workspaces[i] or i
         s = s .. "%" .. i .. 'T'
-        s = s .. " " .. "" .. " "
+        -- s = s .. " " .. "" .. " "
+        s = s .. " " .. name_workspace .. " "
 
         if vim.fn.tabpagenr('$') > 1 then
             s = s .. "%#NonText#|"
@@ -157,5 +152,30 @@ M.myTabLine3 = function()
 
     return s
 end
+local RenameWorkspace = function()
+    local current_tab = vim.fn.tabpagenr()
+    local current_workspace = M.name_workspaces[current_tab] or current_tab
+    
+    local status, renamed_workspace = pcall(vim.fn.input, 'Rename ' .. current_workspace .. ' to:')
+    
+    if (not status) then return end
 
+    -- local renamed_workspace = vim.fn.input('Rename ' .. current_workspace .. ' to:')
+    
+
+    -- local answer = vim.fn.confirm('Workpace' .. current_workspace .. ' to ' .. renamed_workspace, "&Yes\n&No", 1)
+    -- if answer == 1 then
+    --     M.name_workspaces[current_tab] = renamed_workspace
+    --     vim.api.nvim_command('redraw!')
+    -- end
+
+    if renamed_workspace ~= '' then
+        M.name_workspaces[current_tab] = renamed_workspace
+        vim.api.nvim_command('redraw!')
+    end
+
+end
+
+
+vim.keymap.set({ 'n', }, '<A-m>', RenameWorkspace)
 return M
