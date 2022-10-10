@@ -47,18 +47,15 @@ local get_tabpagebuflist = function(tabpage)
 
 end
 
-SwitchBuffer3 = function(minwid, nclicks, button, mod)
-    -- " echom "hola puto"
-    -- " echom a:minwid
-    -- " echom type(a:minwid)
-    -- " echom a:nclicks
-    -- " echom a:button
-    -- " " echom a:mod
-    -- execute "buffer ". a:minwid
-    print(minwid)
-    print('hola')
-
-end
+-- SwitchBuffer3 = function(minwid, nclicks, button, mod)
+--     -- " echom "hola puto"
+--     -- " echom a:minwid
+--     -- " echom type(a:minwid)
+--     -- " echom a:nclicks
+--     -- " echom a:button
+--     -- " " echom a:mod
+--     -- execute "buffer ". a:minwid
+-- end
 
 M.myTabLine3 = function()
     local fileicons = { lua = " ", javascript = " ", json = " ", markdown = " ", typescript = " ",
@@ -66,7 +63,6 @@ M.myTabLine3 = function()
     local s = ""
     local buflist = vim.fn.getbufinfo({ buflisted = true })
     local current_buffer = vim.fn.bufnr()
-    print('-------')
     for i, buffer in pairs(buflist) do
         if buffer['listed'] == 1 then
             local bufs = get_tabpagebuflist(0)
@@ -177,10 +173,6 @@ M.myTabLine3 = function()
                 -- separator_grouphl = "%#TablineSel#"
                 separator_grouphl = get_hl_from_buf(next_buffer, bufs)
             end
-
-
-            print('current:', current_buffer, 'current buffer iteration:', buffer['bufnr'], 'next_buffer:', next_buffer,
-                'separatorgroupt:', separator_grouphl)
             if buffer['bufnr'] == buflist[#buflist]['bufnr'] then
                 s = s .. separator_grouphl .. separator_buf
             end
