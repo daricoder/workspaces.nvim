@@ -5,7 +5,7 @@ M.name_workspaces = {}
 vim.cmd [[
 hi TabLine guibg=NONE gui=NONE
 hi TabLineFill guibg=NONE gui=NONE
-hi TabLineSel guibg=NONE gui=NONE
+hi TabLineSel guibg=NONE
 hi! link Tabline LineNr
 hi! link TablineSel Special
 
@@ -126,6 +126,7 @@ M.myTabLine3 = function()
 
 
 
+            local separator_buf = '| '
             local separator_grouphl = "%#NonText#"
             -- separador izquierdo siempre va y se configura el hl para colorizarlo cuando tenga el foco
             -- -- este es el importante
@@ -137,12 +138,15 @@ M.myTabLine3 = function()
 
             if buffer['bufnr'] == current_buffer then
                 separator_grouphl = filename_group_hl
+                -- separator_buf = '  '
+                -- separator_buf = '╱ '
             elseif before_buffer ~= nil and before_buffer['bufnr'] == current_buffer then
                 -- separator_grouphl = "%#TablineSel#"
+                -- separator_buf = "╲"
                 separator_grouphl = get_hl_from_buf(before_buffer, bufs)
             end
 
-            local separator_buf = ' '
+
             -- local separator_buf_init = ''
             local filetype = vim.bo[buffer['bufnr']].filetype
             local fileicon = fileicons[filetype] or " "
@@ -169,6 +173,7 @@ M.myTabLine3 = function()
 
             if buffer['bufnr'] == current_buffer then
                 separator_grouphl = filename_group_hl
+                -- separator_buf = "╲"
             elseif next_buffer ~= nil and next_buffer['bufnr'] == current_buffer then
                 -- separator_grouphl = "%#TablineSel#"
                 separator_grouphl = get_hl_from_buf(next_buffer, bufs)

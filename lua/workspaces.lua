@@ -107,7 +107,7 @@ local close_buffers = function()
         if i > tab_previous then
             -- print(vim.inspect(require 'tabline'.name_workspaces))
             local workspace_name = require 'tabline'.name_workspaces[i]
-            -- require 'tabline'.name_workspaces[i] = nil
+            require 'tabline'.name_workspaces[i] = nil
             -- print("rest", i)
             require 'tabline'.name_workspaces[i - 1] = workspace_name
             -- print(vim.inspect(require 'tabline'.name_workspaces))
