@@ -8,6 +8,10 @@ hi TabLineFill guibg=NONE gui=NONE
 hi TabLineSel guibg=NONE
 hi! link Tabline LineNr
 hi! link TablineSel Special
+hi link filenameSel PmenuSel
+" hi! link filenameSel Special
+hi filename guifg=black guibg=white
+hi separatorSel guifg=white guibg=NONE
 
 function SwitchBuffer(minwid, nclicks, button, mod)
     execute "buffer ". a:minwid
@@ -15,20 +19,88 @@ endfunction
 
 
 ]]
-local get_hl_from_buf = function(buffer, bufs)
-    local filename_group_hl = nil
-    if buffer['hidden'] == 0 and bufs[buffer['bufnr']] ~= nil then
+local get_color_from_hl = function(colorbg, colorfg)
+    -- {
+    --     background = "Normal"
+    -- }
+    -- {
+    --     foreground = "PmenuSel"
+    -- }
+    local default_color = {
+        background = "#FFFFFF",
+        foreground = "#000000"
+    }
+    local attrbg = colorbg["background"] and "background" or "foreground"
+    local attrfg = colorfg["background"] and "background" or "foreground"
+    local namebg = colorbg[attrbg]
+    local namefg = colorfg[attrfg]
 
+
+    if not (attrbg and attrfg and namebg and namefg) then
+        return default_color
+    end
+
+
+
+    local statusbg, bg = pcall(vim.api.nvim_get_hl_by_name, namebg, true)
+    local statusfg, fg = pcall(vim.api.nvim_get_hl_by_name, namefg, true)
+
+
+    if not (statusbg and statusfg) then
+        return default_color
+    end
+    if bg[attrbg] == nil or fg[attrfg] == nil then
+        return default_color
+    end
+
+    bg = string.format("#%06x", bg[attrbg])
+    fg = string.format("#%06x", fg[attrfg])
+
+    return {
+        background = bg,
+        foreground = fg
+    }
+end
+
+
+local colorSel = get_color_from_hl({ background = "Pmenusel" }, { foreground = "PmenuSel" })
+local colorModif = get_color_from_hl({ background = "IncSearch" }, { foreground = "IncSearch" })
+local color = get_color_from_hl({ background = "Pmenu" }, { foreground = "Pmenu" })
+
+vim.api.nvim_set_hl(0, "tablineSeparatorFocus", { fg = colorSel.background })
+vim.api.nvim_set_hl(0, "tablineFocus", { fg = colorSel.foreground, bg = colorSel.background })
+
+vim.api.nvim_set_hl(0, "tablineSeparatorModified", { fg = colorModif.background })
+vim.api.nvim_set_hl(0, "tablineModified", { fg = colorModif.foreground, bg = colorModif.background })
+
+vim.api.nvim_set_hl(0, "tablineSeparatorUnfocus", { fg = color.background })
+vim.api.nvim_set_hl(0, "tablineUnfocus", { fg = color.foreground, bg = color.background })
+
+local get_hl_from_buf = function(buffer, bufs, item)
+    local filename_group_hl = nil
+    item = item or "tab"
+    if buffer['hidden'] == 0 and bufs[buffer['bufnr']] ~= nil then
         if buffer['changed'] == 1 then
             -- s = s .. '%#Statement#'
-            filename_group_hl = "%#Statement#"
+            if item == "tab" then
+                filename_group_hl = "%#tablineModified#"
+            else
+                filename_group_hl = "%#tablineSeparatorModified#"
+            end
         else
-            -- s = s .. '%#TablineSel#'
-            filename_group_hl = "%#TablineSel#"
+            if item == "tab" then
+                filename_group_hl = "%#tablineFocus#"
+            else
+                filename_group_hl = "%#tablineSeparatorFocus#"
+            end
         end
     else
         -- s = s .. '%#Tabline#'
-        filename_group_hl = "%#Tabline#"
+        if item == "tab" then
+            filename_group_hl = "%#tablineUnfocus#"
+        else
+            filename_group_hl = "%#tablineSeparatorUnfocus#"
+        end
     end
     return filename_group_hl
 end
@@ -44,7 +116,6 @@ local get_tabpagebuflist = function(tabpage)
         end
     end
     return bufs
-
 end
 
 -- SwitchBuffer3 = function(minwid, nclicks, button, mod)
@@ -58,130 +129,91 @@ end
 -- end
 
 M.myTabLine3 = function()
-    local fileicons = { lua = " ", javascript = " ", json = " ", markdown = " ", typescript = " ",
-        python = " ", html = " " }
+    local fileicons = {
+        lua = " ",
+        javascript = " ",
+        json = " ",
+        markdown = " ",
+        typescript = " ",
+        python = " ",
+        html = " "
+    }
     local s = ""
     local buflist = vim.fn.getbufinfo({ buflisted = true })
     local current_buffer = vim.fn.bufnr()
     for i, buffer in pairs(buflist) do
-        if buffer['listed'] == 1 then
-            local bufs = get_tabpagebuflist(0)
-            local bufname = '[NO NAME]'
-            local lsp_warns = vim.diagnostic.get(buffer['bufnr'], { severity = vim.diagnostic.severity.WARN })
-            local lsp_errors = vim.diagnostic.get(buffer['bufnr'], { severity = vim.diagnostic.severity.ERROR })
-            local lsp_indicators = ''
-            -- local lsp_warn_icon = "💩"
-            local lsp_warn_icon = ""
-            -- local lsp_error_icon = "💀"
-            local lsp_error_icon = "ﮊ"
-            -- local lsp_warn_group_color = 'DiagnosticWarn'
-            -- local lsp_error_group_color = 'DiagnosticError'
-            local lsp_warn_group_color = 'Statement'
-            local lsp_error_group_color = 'Statement'
+        local bufs = get_tabpagebuflist(0)
+        local bufname = '[NO NAME]'
+        local lsp_warns = vim.diagnostic.get(buffer['bufnr'], { severity = vim.diagnostic.severity.WARN })
+        local lsp_errors = vim.diagnostic.get(buffer['bufnr'], { severity = vim.diagnostic.severity.ERROR })
+        local lsp_indicators = ''
+        local lsp_warn_icon = ""
+        local lsp_error_icon = "ﮊ"
+        local lsp_warn_group_color = 'Statement'
+        local lsp_error_group_color = 'Statement'
 
 
 
-            local filename_group_hl = get_hl_from_buf(buffer, bufs)
-            -- if buffer['hidden'] == 0 and bufs[buffer['bufnr']] ~= nil then
-            --
-            --     if buffer['changed'] == 1 then
-            --         -- s = s .. '%#Statement#'
-            --         filename_group_hl = "%#Statement#"
-            --     else
-            --         -- s = s .. '%#TablineSel#'
-            --         filename_group_hl = "%#TablineSel#"
-            --     end
-            -- else
-            --     -- s = s .. '%#Tabline#'
-            --     filename_group_hl = "%#Tabline#"
-            -- end
+        local filename_group_hl = get_hl_from_buf(buffer, bufs)
 
-
-            -- set lsp indicators
-            if #lsp_warns > 0 or #lsp_errors > 0 then
-                lsp_indicators = lsp_indicators .. ' ['
-            end
-            if #lsp_warns > 0 then
-                lsp_indicators = lsp_indicators ..
-                    -- '%#' .. lsp_warn_group_color .. '#' .. #lsp_warns .. lsp_warn_icon .. ''
-                    #lsp_warns .. filename_group_hl .. lsp_warn_icon .. ''
-            end
-            --  if some warns exists
-            if #lsp_warns > 0 and #lsp_errors > 0 then
-                lsp_indicators = lsp_indicators .. ' '
-            end
-            -- if some errors exists
-            if #lsp_errors > 0 then
-                lsp_indicators = lsp_indicators ..
-                    -- '%#' .. lsp_error_group_color .. '#' .. #lsp_errors .. lsp_error_icon .. ''
-                    #lsp_errors .. filename_group_hl .. lsp_error_icon .. ''
-            end
-            -- if some warn or error exist
-            if #lsp_warns > 0 or #lsp_errors > 0 then
-                lsp_indicators = lsp_indicators .. filename_group_hl .. ']'
-            end
-            if buffer['name'] ~= '' then
-                bufname = buffer['name']
-            end
-
-
-
-            local separator_buf = '| '
-            local separator_grouphl = "%#NonText#"
-            -- separador izquierdo siempre va y se configura el hl para colorizarlo cuando tenga el foco
-            -- -- este es el importante
-            -- -- ya que se verifica que si el buffer anterior es el foco entonces se le aplica el highligh
-            local before_buffer = buflist[i - 1] and buflist[i - 1]['listed'] == 1 and buflist[i - 1]['bufnr']
-            if buflist[i - 1] and buflist[i - 1]['listed'] == 1 then
-                before_buffer = buflist[i - 1]
-            end
-
-            if buffer['bufnr'] == current_buffer then
-                separator_grouphl = filename_group_hl
-                -- separator_buf = '  '
-                -- separator_buf = '╱ '
-            elseif before_buffer ~= nil and before_buffer['bufnr'] == current_buffer then
-                -- separator_grouphl = "%#TablineSel#"
-                -- separator_buf = "╲"
-                separator_grouphl = get_hl_from_buf(before_buffer, bufs)
-            end
-
-
-            -- local separator_buf_init = ''
-            local filetype = vim.bo[buffer['bufnr']].filetype
-            local fileicon = fileicons[filetype] or " "
-
-            s = s .. separator_grouphl .. separator_buf .. filename_group_hl
-                .. '%' .. buffer['bufnr'] .. "@SwitchBuffer@"
-                .. fileicon
-                .. vim.fn.fnamemodify(bufname, ':t')
-                .. lsp_indicators
-                .. '%X'
-            if buffer['changed'] == 1 then
-                s = s .. " ●"
-            end
-            s = s .. " "
-
-
-
-            -- separador derecho en caso que sea el ultimo configurarlo
-            separator_grouphl = "%#NonText#"
-            local next_buffer = buflist[i + 1] and buflist[i + 1]['listed'] == 1 and buflist[i + 1]['bufnr']
-            if buflist[i + 1] and buflist[i + 1]['listed'] == 1 then
-                next_buffer = buflist[i + 1]
-            end
-
-            if buffer['bufnr'] == current_buffer then
-                separator_grouphl = filename_group_hl
-                -- separator_buf = "╲"
-            elseif next_buffer ~= nil and next_buffer['bufnr'] == current_buffer then
-                -- separator_grouphl = "%#TablineSel#"
-                separator_grouphl = get_hl_from_buf(next_buffer, bufs)
-            end
-            if buffer['bufnr'] == buflist[#buflist]['bufnr'] then
-                s = s .. separator_grouphl .. separator_buf
-            end
+        -- set lsp indicators
+        if #lsp_warns > 0 or #lsp_errors > 0 then
+            lsp_indicators = lsp_indicators .. ' ['
         end
+        if #lsp_warns > 0 then
+            lsp_indicators = lsp_indicators ..
+                -- '%#' .. lsp_warn_group_color .. '#' .. #lsp_warns .. lsp_warn_icon .. ''
+                #lsp_warns .. filename_group_hl .. lsp_warn_icon .. ''
+        end
+        --  if some warns exists
+        if #lsp_warns > 0 and #lsp_errors > 0 then
+            lsp_indicators = lsp_indicators .. ' '
+        end
+        -- if some errors exists
+        if #lsp_errors > 0 then
+            lsp_indicators = lsp_indicators ..
+                -- '%#' .. lsp_error_group_color .. '#' .. #lsp_errors .. lsp_error_icon .. ''
+                #lsp_errors .. filename_group_hl .. lsp_error_icon .. ''
+        end
+        -- if some warn or error exist
+        if #lsp_warns > 0 or #lsp_errors > 0 then
+            lsp_indicators = lsp_indicators .. filename_group_hl .. ']'
+        end
+        if buffer['name'] ~= '' then
+            bufname = buffer['name']
+        end
+        -- --------
+        local separator_init_buf = ''
+        local separator_final_buf = ''
+        -- separador izquierdo siempre va y se configura el hl para colorizarlo cuando tenga el foco
+        -- -- este es el importante
+        -- -- ya que se verifica que si el buffer anterior es el foco entonces se le aplica el highligh
+        -- local before_buffer = buflist[i - 1] and buflist[i - 1]['bufnr']
+        -- if buflist[i - 1] and buflist[i - 1]['listed'] == 1 then
+        --     before_buffer = buflist[i - 1]
+        -- end
+
+        separator_grouphl = get_hl_from_buf(buffer, bufs, "separator")
+        -- if buffer['hidden'] ~= 0 then
+        --     separator_init_buf = "╱"
+        --     separator_final_buf = "╲"
+        -- end
+
+
+        -- local separator_buf_init = ''
+        local filetype = vim.bo[buffer['bufnr']].filetype
+        local fileicon = fileicons[filetype] or " "
+
+        s = s .. separator_grouphl .. separator_init_buf .. filename_group_hl
+            .. '%' .. buffer['bufnr'] .. "@SwitchBuffer@"
+            .. " " .. fileicon
+            .. vim.fn.fnamemodify(bufname, ':t')
+            .. lsp_indicators
+            .. '%X'
+        if buffer['changed'] == 1 then
+            s = s .. " ●"
+        end
+        s = s .. " " .. separator_grouphl .. separator_final_buf
     end
 
     -- tabs
@@ -231,7 +263,6 @@ local RenameWorkspace = function()
         M.name_workspaces[current_tab] = renamed_workspace
         vim.api.nvim_command('redraw!')
     end
-
 end
 
 

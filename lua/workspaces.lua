@@ -1,9 +1,9 @@
+vim.opt.showtabline = 2
 local M = {}
 local BufListed = {}
 local BufUnListed = {}
 local tab_previous = nil
 local make_buf_listed_and_unlisted = function()
-
     local current_tab = vim.fn.tabpagenr()
     local max_tabs = vim.fn.tabpagenr('$')
     -- local count_buffers_in_current_tab = 0
@@ -12,7 +12,6 @@ local make_buf_listed_and_unlisted = function()
     for buf, tabs in pairs(BufListed) do
         local exist = false
         for tab, bool in pairs(tabs) do
-
             -- if tab > max_tabs then
             --     BufListed[buf] = nil
             --     vim.api.nvim_buf_delete(buf, {force = true})
@@ -41,7 +40,6 @@ local make_buf_listed_and_unlisted = function()
                 -- end
                 exist = true
                 -- count_buffers_in_current_tab = count_buffers_in_current_tab + 1
-
             end
 
             -- if tab ~= current_tab  then
@@ -54,7 +52,6 @@ local make_buf_listed_and_unlisted = function()
     -- if current_tab > 1 and count_buffers_in_current_tab ~= 0 and count_nonamemodified_buffers_in_current_tab ~= 0 then
     --     vim.api.nvim_buf_delete(nonamedmodifiedbuffer,{force = true})
     -- end
-
 end
 
 
@@ -82,8 +79,6 @@ local close_buffers = function()
                 -- print('tab > tabprevious')
                 BufListed[buf][tab] = nil
                 BufListed[buf][tab - 1] = true
-
-
             end
         end
         if buf_exist == 0 then
@@ -93,11 +88,8 @@ local close_buffers = function()
             vim.api.nvim_buf_delete(buf, { force = true })
         end
         -- print('termino iteracion')
-
-
     end
     for i = current_tab, last_tab, 1 do
-
         if i == tab_previous then
             -- print(vim.inspect(require 'tabline'.name_workspaces))
             require 'tabline'.name_workspaces[i] = nil
@@ -112,24 +104,19 @@ local close_buffers = function()
             require 'tabline'.name_workspaces[i - 1] = workspace_name
             -- print(vim.inspect(require 'tabline'.name_workspaces))
         end
-
     end
-
 end
 
 local make_buf_listed = function()
-
     for buf, tabs in pairs(BufListed) do
         vim.fn.setbufvar(buf, '&buflisted', 1)
     end
 end
 
 local tab_created = function()
-
     local current_tab = vim.fn.tabpagenr()
     for buf, tabs in pairs(BufListed) do
         for tab, bool in pairs(tabs) do
-
             -- print('buf: ' ..
             --     buf .. ' tab: ' .. tab .. ' previoustab: ' .. tab_previous .. ' current_tab: ' .. current_tab)
             if tab >= current_tab then
@@ -152,7 +139,6 @@ end
 local group = vim.api.nvim_create_augroup('Workspaces', { clear = false })
 
 function M.setup(conf)
-
     vim.api.nvim_create_autocmd({ "BufNew", "BufEnter", "WinEnter", "WinLeave", "TabNew", "TabLeave", "TabClosed" }, {
         group = group,
         pattern = '*',
@@ -178,7 +164,6 @@ function M.setup(conf)
                 -- end
 
                 if vim.bo[buf].buflisted then
-
                     -- si aun no tiene ningun registro
 
                     if (BufListed[buf] == nil) then
@@ -241,7 +226,6 @@ function M.setup(conf)
             -- print(vim.inspect(BufListed))
         end
     })
-
 end
 
 vim.api.nvim_create_autocmd({ 'User' }, {
