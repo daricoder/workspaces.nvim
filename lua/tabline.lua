@@ -76,6 +76,14 @@ vim.api.nvim_set_hl(0, "tablineModified", { fg = colorModif.foreground, bg = col
 vim.api.nvim_set_hl(0, "tablineSeparatorUnfocus", { fg = color.background })
 vim.api.nvim_set_hl(0, "tablineUnfocus", { fg = color.foreground, bg = color.background })
 
+-- vim.api.nvim_set_hl(0, "tablineWorkspaceSeparatorFinalFocus", { fg = colorModif.background, bg = color.background })
+-- vim.api.nvim_set_hl(0, "tablineWorkspaceSeparatorFinalUnFocus", { fg = colorModif.background, bg = color.background })
+
+vim.api.nvim_set_hl(0, "tablineWorkspaceSeparatorRightFocus", { fg = color.background, bg = colorModif.background })
+vim.api.nvim_set_hl(0, "tablineWorkspaceSeparatorRightUnFocus", { fg = colorModif.background, bg = color.background })
+vim.api.nvim_set_hl(0, "tablineWorkspaceSeparator", { fg = color.background, bg = color.background })
+
+
 local get_hl_from_buf = function(buffer, bufs, item)
     local filename_group_hl = nil
     item = item or "tab"
@@ -217,20 +225,77 @@ M.myTabLine3 = function()
     end
 
     -- tabs
+    tab_grouphl = ""
+    separatorLeft_grouphl = ""
+    separatorRight_grouphl = ""
+    separatorLeft = ""
+    separatorRight = ""
     s = s .. "%="
     for i = 1, vim.fn.tabpagenr('$'), 1 do
         if i == vim.fn.tabpagenr() then
-            s = s .. "%#TabLineSel#"
+            tab_grouphl = "%#tablineModified#"
         else
-            s = s .. "%#Tabline#"
+            tab_grouphl = "%#tablineUnfocus#"
         end
+
+        if i == 1 then
+            separatorLeft_grouphl = "%#tablineSeparatorModified#"
+            separatorRight_grouphl = "%#tablineSeparatorModified#"
+            separatorLeft = ""
+            separatorRight = ""
+            if i ~= vim.fn.tabpagenr('$') then
+                if i + 1 == vim.fn.tabpagenr() then
+                    separatorLeft_grouphl = "%#tablineSeparatorUnfocus#"
+                    separatorRight_grouphl = "%#tablineWorkspaceSeparatorRightFocus#"
+                elseif i ~= vim.fn.tabpagenr() then
+                    separatorLeft_grouphl = "%#tablineSeparatorUnfocus#"
+                    separatorRight_grouphl = "%#tablineWorkspaceSeparator#"
+                elseif i == vim.fn.tabpagenr() then
+                    separatorRight_grouphl = "%#tablineWorkspaceSeparatorRightUnFocus#"
+                end
+            end
+        elseif i == vim.fn.tabpagenr('$') then
+            separatorLeft_grouphl = ""
+            separatorRight_grouphl = "%#tablineSeparatorModified#"
+            separatorLeft = ""
+            separatorRight = ""
+            if i ~= vim.fn.tabpagenr() then
+                separatorRight_grouphl = "%#tablineSeparatorUnfocus#"
+            end
+        else
+            separatorLeft_grouphl = ""
+            separatorRight_grouphl = "%#tablineWorkspaceSeparatorRightUnFocus#"
+            separatorLeft = ""
+            separatorRight = ""
+            if i + 1 == vim.fn.tabpagenr() then
+                separatorRight_grouphl = "%#tablineWorkspaceSeparatorRightFocus#"
+            elseif i ~= vim.fn.tabpagenr() then
+                separatorRight_grouphl = "%#tablineWorkspaceSeparator#"
+            end
+        end
+
+
+
         local name_workspace = M.name_workspaces[i] or i
         s = s .. "%" .. i .. 'T'
         -- s = s .. " " .. "" .. " "
-        s = s .. " " .. name_workspace .. " "
+        s = s ..
+            separatorLeft_grouphl .. separatorLeft ..
+            tab_grouphl .. " " .. name_workspace .. " " ..
+            separatorRight_grouphl .. separatorRight
+
+
+
+
+
+
+
+
+
+
 
         if vim.fn.tabpagenr('$') > 1 then
-            s = s .. "%#NonText#|"
+            -- s = s .. "%#NonText#|"
         end
     end
     s = s .. "%#TabLineFill#%T"
