@@ -1,14 +1,15 @@
 local M = {}
 M.name_workspaces = {}
+local conf = require "workspaces".conf
 
 
 vim.cmd [[
-hi TabLine guibg=NONE gui=NONE
-hi TabLineFill guibg=NONE gui=NONE
-hi TabLineSel guibg=NONE
-hi! link Tabline LineNr
-hi! link TablineSel Special
-hi link filenameSel PmenuSel
+" hi TabLine guibg=NONE gui=NONE
+" hi TabLineFill guibg=NONE gui=NONE
+" hi TabLineSel guibg=NONE
+" hi! link Tabline LineNr
+" hi! link TablineSel Special
+" hi link filenameSel PmenuSel
 " hi! link filenameSel Special
 hi filename guifg=black guibg=white
 hi separatorSel guifg=white guibg=NONE
@@ -62,10 +63,13 @@ local get_color_from_hl = function(colorbg, colorfg)
     }
 end
 
+local colorSel = conf and conf.colorSel or get_color_from_hl({ background = "Pmenusel" }, { foreground = "PmenuSel" })
+local colorModif = conf and conf.colorModif or get_color_from_hl({ background = "IncSearch" }, { foreground = "IncSearch" })
+local color = conf and conf.color or get_color_from_hl({ background = "Tabline" }, { foreground = "Tabline" })
+vim.print(conf)
 
-local colorSel = get_color_from_hl({ background = "Pmenusel" }, { foreground = "PmenuSel" })
-local colorModif = get_color_from_hl({ background = "IncSearch" }, { foreground = "IncSearch" })
-local color = get_color_from_hl({ background = "Pmenu" }, { foreground = "Pmenu" })
+
+local colorWorkspaceModif = colors and colors.colorWorkspaceModif or get_color_from_hl({ background = "Pmenusel" }, { foreground = "Search" })
 
 vim.api.nvim_set_hl(0, "tablineSeparatorFocus", { fg = colorSel.background })
 vim.api.nvim_set_hl(0, "tablineFocus", { fg = colorSel.foreground, bg = colorSel.background })
@@ -76,12 +80,19 @@ vim.api.nvim_set_hl(0, "tablineModified", { fg = colorModif.foreground, bg = col
 vim.api.nvim_set_hl(0, "tablineSeparatorUnfocus", { fg = color.background })
 vim.api.nvim_set_hl(0, "tablineUnfocus", { fg = color.foreground, bg = color.background })
 
--- vim.api.nvim_set_hl(0, "tablineWorkspaceSeparatorFinalFocus", { fg = colorModif.background, bg = color.background })
--- vim.api.nvim_set_hl(0, "tablineWorkspaceSeparatorFinalUnFocus", { fg = colorModif.background, bg = color.background })
 
-vim.api.nvim_set_hl(0, "tablineWorkspaceSeparatorRightFocus", { fg = color.background, bg = colorModif.background })
-vim.api.nvim_set_hl(0, "tablineWorkspaceSeparatorRightUnFocus", { fg = colorModif.background, bg = color.background })
-vim.api.nvim_set_hl(0, "tablineWorkspaceSeparator", { fg = color.background, bg = color.background })
+vim.api.nvim_set_hl(0, "tablineWorkspaceSeparatorLeftFocus", { fg = colorWorkspaceModif.background })
+vim.api.nvim_set_hl(0, "tablineWorkspaceSeparatorLeftUnFocus", { fg = colorWorkspaceModif.foreground })
+
+vim.api.nvim_set_hl(0, "tablineWorkspaceSeparatorRightFocus",
+    { fg = colorWorkspaceModif.foreground, bg = colorWorkspaceModif.background })
+vim.api.nvim_set_hl(0, "tablineWorkspaceSeparatorRightUnFocus",
+    { fg = colorWorkspaceModif.background, bg = colorWorkspaceModif.foreground })
+vim.api.nvim_set_hl(0, "tablineWorkspaceSeparator",
+    { fg = colorWorkspaceModif.foreground, bg = colorWorkspaceModif.foreground })
+
+
+
 
 
 local get_hl_from_buf = function(buffer, bufs, item)
@@ -136,12 +147,13 @@ end
 --     -- execute "buffer ". a:minwid
 -- end
 
-M.myTabLine3 = function()
+M.myTabLine3 = function(conf)
+
     local fileicons = {
         lua = " ",
         javascript = " ",
         json = " ",
-        markdown = " ",
+        markdown = " ",
         typescript = " ",
         python = " ",
         html = " "
@@ -233,22 +245,22 @@ M.myTabLine3 = function()
     s = s .. "%="
     for i = 1, vim.fn.tabpagenr('$'), 1 do
         if i == vim.fn.tabpagenr() then
-            tab_grouphl = "%#tablineModified#"
+            tab_grouphl = "%#tablineWorkspaceSeparatorRightFocus#"
         else
-            tab_grouphl = "%#tablineUnfocus#"
+            tab_grouphl = "%#tablineWorkspaceSeparatorRightUnFocus#"
         end
 
         if i == 1 then
-            separatorLeft_grouphl = "%#tablineSeparatorModified#"
-            separatorRight_grouphl = "%#tablineSeparatorModified#"
+            separatorLeft_grouphl = "%#tablineWorkspaceSeparatorLeftFocus#"
+            separatorRight_grouphl = "%#tablineWorkspaceSeparatorLeftFocus#"
             separatorLeft = ""
             separatorRight = ""
             if i ~= vim.fn.tabpagenr('$') then
                 if i + 1 == vim.fn.tabpagenr() then
-                    separatorLeft_grouphl = "%#tablineSeparatorUnfocus#"
+                    separatorLeft_grouphl = "%#tablineWorkspaceSeparatorLeftUnFocus#"
                     separatorRight_grouphl = "%#tablineWorkspaceSeparatorRightFocus#"
                 elseif i ~= vim.fn.tabpagenr() then
-                    separatorLeft_grouphl = "%#tablineSeparatorUnfocus#"
+                    separatorLeft_grouphl = "%#tablineWorkspaceSeparatorLeftUnFocus#"
                     separatorRight_grouphl = "%#tablineWorkspaceSeparator#"
                 elseif i == vim.fn.tabpagenr() then
                     separatorRight_grouphl = "%#tablineWorkspaceSeparatorRightUnFocus#"
@@ -256,11 +268,11 @@ M.myTabLine3 = function()
             end
         elseif i == vim.fn.tabpagenr('$') then
             separatorLeft_grouphl = ""
-            separatorRight_grouphl = "%#tablineSeparatorModified#"
+            separatorRight_grouphl = "%#tablineWorkspaceSeparatorLeftFocus#"
             separatorLeft = ""
             separatorRight = ""
             if i ~= vim.fn.tabpagenr() then
-                separatorRight_grouphl = "%#tablineSeparatorUnfocus#"
+                separatorRight_grouphl = "%#tablineWorkspaceSeparatorLeftUnFocus#"
             end
         else
             separatorLeft_grouphl = ""
@@ -288,12 +300,6 @@ M.myTabLine3 = function()
 
 
 
-
-
-
-
-
-
         if vim.fn.tabpagenr('$') > 1 then
             -- s = s .. "%#NonText#|"
         end
@@ -302,7 +308,7 @@ M.myTabLine3 = function()
 
     if vim.fn.tabpagenr('$') > 1 then
         -- s = s .. "%#Tabline#%999X" .. '\uf00d'
-        s = s .. ' %#TabLine#%999X' .. "" .. "%999X "
+        s = s .. '%#tablineWorkspaceSeparatorLeftFocus#%999X' .. " " .. "%999X "
     end
 
     return s

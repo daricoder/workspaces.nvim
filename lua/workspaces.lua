@@ -3,6 +3,7 @@ local M = {}
 local BufListed = {}
 local BufUnListed = {}
 local tab_previous = nil
+M.conf = nil
 local make_buf_listed_and_unlisted = function()
     local current_tab = vim.fn.tabpagenr()
     local max_tabs = vim.fn.tabpagenr('$')
@@ -139,6 +140,7 @@ end
 local group = vim.api.nvim_create_augroup('Workspaces', { clear = false })
 
 function M.setup(conf)
+    M.conf = conf
     vim.api.nvim_create_autocmd({ "BufNew", "BufEnter", "WinEnter", "WinLeave", "TabNew", "TabLeave", "TabClosed" }, {
         group = group,
         pattern = '*',
